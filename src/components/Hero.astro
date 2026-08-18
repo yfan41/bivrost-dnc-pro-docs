@@ -1,0 +1,19 @@
+---
+import Default from '@astrojs/starlight/components/Hero.astro';
+// Vite ?raw import: inlined at bundle time, so it also works in the prerender build
+// where import.meta.url points into dist/ and fs paths would break.
+import versionRaw from '../../VERSION?raw';
+
+const version = versionRaw.trim();
+
+// Version badge from the VERSION single source of truth (tagline renders as HTML).
+// Hero action links are authored relative in the frontmatter, so they need no base
+// handling here — see the links-validator note in astro.config.mjs.
+const hero = Astro.locals.starlightRoute.entry.data.hero;
+if (hero?.tagline && !hero.tagline.includes('hero-version')) {
+  // Guarded so dev-server re-renders can't double-prefix the shared entry.
+  hero.tagline = `<span class="hero-version">v${version}</span> ${hero.tagline}`;
+}
+---
+
+<Default />

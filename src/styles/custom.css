@@ -1,0 +1,127 @@
+/**
+ * Global styles. Starlight accent tuned to the Bivrost brand blue
+ * (matching the bivrost logo wordmark), same palette as the gateway manual.
+ */
+
+/* Dark mode (Starlight default root) */
+:root {
+  --sl-color-accent-low: #12314f;
+  --sl-color-accent: #2176ca;
+  --sl-color-accent-high: #b8d8f5;
+}
+
+/* Light mode */
+:root[data-theme='light'] {
+  --sl-color-accent-low: #d5e5f5;
+  --sl-color-accent: #1e6bb8;
+  --sl-color-accent-high: #154b81;
+}
+
+/* Screenshots: card-like framing, natural size but responsive. The console captures
+   are 1560px wide, so on a narrow viewport they scale down rather than overflow. */
+.sl-markdown-content img[src*='/img/console/'],
+.sl-markdown-content img[src*='/img/shopfloor/'] {
+  max-width: 100%;
+  border: 1px solid var(--sl-color-gray-5);
+  border-radius: 8px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+}
+
+/*
+ * Header: the logo wordmark plus the search and menu buttons crowd out the site title
+ * on narrow viewports, and Starlight's `.title-wrapper` clips the overflow with no
+ * ellipsis — cutting CJK titles mid-glyph. Drop the title text below 59em and let the
+ * wordmark carry the branding; the page <h1> repeats the document name underneath.
+ * Kept visually hidden rather than `display: none` so the link keeps its accessible
+ * name. Mirrors the same rule in the gateway manual.
+ */
+@media (max-width: 59em) {
+  .site-title > span {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+    border: 0;
+  }
+}
+
+/* Safety net on wider screens: degrade to an ellipsis instead of a mid-glyph cut. */
+.site-title > span {
+  text-overflow: ellipsis;
+}
+
+/*
+ * Front-page hero (index.md `hero:` frontmatter on the doc template, not a splash
+ * page): tame Starlight's splash-sized padding, collapse the empty image column, and
+ * style the version badge injected by src/components/Hero.astro. These win over
+ * Starlight because its rules live in @layer starlight and user customCss is unlayered.
+ */
+.hero {
+  padding-block: 1.5rem 0.5rem;
+}
+@media (min-width: 50rem) {
+  .hero:not(:has(img, .hero-html)) {
+    grid-template-columns: 100%;
+  }
+}
+.hero .hero-version {
+  display: inline-block;
+  border: 1px solid var(--sl-color-accent);
+  color: var(--sl-color-accent-high);
+  background: var(--sl-color-accent-low);
+  border-radius: 999rem;
+  padding: 0.1rem 0.6rem;
+  font-size: var(--sl-text-sm);
+  margin-inline-end: 0.5rem;
+}
+
+/* Front-page quick-links card grid (raw HTML in index.md; Starlight LinkCard
+   look-alike using its theme tokens so light/dark both work). */
+.home-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr));
+  gap: 0.75rem;
+}
+.home-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  border: 1px solid var(--sl-color-gray-5);
+  border-radius: 0.5rem;
+  padding: 0.875rem 1rem;
+  box-shadow: var(--sl-shadow-sm);
+  text-decoration: none;
+  transition: border-color 0.15s;
+}
+.home-card:hover {
+  border-color: var(--sl-color-accent);
+}
+.home-card-title {
+  color: var(--sl-color-white);
+  font-weight: 600;
+}
+.home-card-desc {
+  color: var(--sl-color-gray-3);
+  font-size: var(--sl-text-sm);
+}
+
+/* Capability / support matrices ✓ ✗ (Starlight's theme-aware semantic colors). */
+.sl-markdown-content td .sup-y {
+  color: var(--sl-color-green);
+  font-weight: 600;
+}
+.sl-markdown-content td .sup-n {
+  color: var(--sl-color-red);
+}
+
+/* A caption under a screenshot: smaller, muted, centred, tucked up against the image. */
+.sl-markdown-content .shot-caption {
+  margin-top: -0.75rem;
+  color: var(--sl-color-gray-3);
+  font-size: var(--sl-text-sm);
+  text-align: center;
+}

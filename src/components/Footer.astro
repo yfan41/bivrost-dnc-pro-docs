@@ -1,0 +1,24 @@
+---
+import Default from '@astrojs/starlight/components/Footer.astro';
+// Vite ?raw import: inlined at bundle time, so it also works in the prerender build
+// where import.meta.url points into dist/ and fs paths would break.
+import versionRaw from '../../VERSION?raw';
+
+const version = versionRaw.trim();
+---
+
+<Default><slot /></Default>
+<div class="copyright">
+  {`© BIVROST TECHONOLOGIES Company Limited / 深圳市彼络科技有限公司 · DNC Pro 手册 v${version} · 联系电话：18824672282`}
+</div>
+
+<style>
+  .copyright {
+    margin-top: 1.5rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--sl-color-gray-6);
+    color: var(--sl-color-gray-3);
+    font-size: var(--sl-text-sm);
+    text-align: center;
+  }
+</style>

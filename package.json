@@ -1,0 +1,28 @@
+{
+  "name": "bivrost-dnc-pro-docs",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "astro dev",
+    "dev": "astro dev",
+    "build": "astro build",
+    "serve": "astro preview",
+    "astro": "astro",
+    "typecheck": "astro check"
+  },
+  "dependencies": {
+    "@astrojs/markdown-satteri": "^0.3.4",
+    "@astrojs/starlight": "^0.41.3",
+    "astro": "^7.1.0",
+    "sharp": "^0.35.3",
+    "starlight-links-validator": "^0.25.2"
+  },
+  "engines": {
+    "node": ">=20.0"
+  },
+  "devDependencies": {
+    "@astrojs/check": "^0.9.9",
+    "typescript": "^5.9.3"
+  }
+}
