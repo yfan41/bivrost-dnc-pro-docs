@@ -68,7 +68,7 @@ export default defineConfig({
     starlight({
       title: 'DNC Pro 使用手册',
       description:
-        'DNC Pro 数控程序管理系统使用说明书：安装配置、操作方法、参考资料与故障处置',
+        'DNC Pro 数控程序管理系统使用说明书：接入配置、操作方法、参考资料与故障处置',
       favicon: '/img/favicon.ico',
       logo: {
         src: './src/assets/logo.png',
@@ -101,13 +101,12 @@ export default defineConfig({
         { label: '2 应用背景与目标问题', slug: 'why' },
         { label: '3 系统构成', slug: 'architecture' },
         {
-          label: '4 安装与初始配置',
+          label: '4 接入与初始配置',
           collapsed: false,
           items: [
             { label: '4 章导言', slug: 'start' },
-            { label: '4.1 安装部署', slug: 'start/install' },
-            { label: '4.2 接入网关与机台', slug: 'start/gateways' },
-            { label: '4.3 首次程序下发', slug: 'start/first-transfer' },
+            { label: '4.1 接入网关与机台', slug: 'start/gateways' },
+            { label: '4.2 首次程序下发', slug: 'start/first-transfer' },
           ],
         },
         {
