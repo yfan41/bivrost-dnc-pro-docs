@@ -125,3 +125,12 @@
   font-size: var(--sl-text-sm);
   text-align: center;
 }
+
+/* A numbered table title, placed above the table it names (manual convention:
+   figures are captioned below, tables titled above). Mirrors .shot-caption. */
+.sl-markdown-content .tbl-caption {
+  margin-bottom: -0.25rem;
+  color: var(--sl-color-gray-3);
+  font-size: var(--sl-text-sm);
+  text-align: center;
+}

@@ -1,95 +1,118 @@
 ---
-title: "6.1. 角色与权限"
-description: 五个固定角色、十三项权限的完整矩阵，以及授权范围的计算方式
+title: "6.1 角色与权限"
+description: 规定五个固定角色与十三项权限的对应矩阵、授权范围的判定规则与常见错误码的含义
 ---
 
-## 设计原则 {#principles}
+## 6.1.1 适用范围 {#scope}
 
-- **角色是固定的**，不能自定义。五个角色覆盖车间里真实存在的五种职责，
-  可自定义的角色系统在实践中总是退化成"每个人一个角色"。
-- **范围是可变的**。同一个角色可以只作用在某个机组或某个程序库上。
-- **人和令牌用同一套规则**。没有"超级令牌"。
+本节规定本系统的访问控制模型。适用于管理员配置授权，亦作为其他各节权限要求的判定依据。
 
-## 权限矩阵 {#matrix}
+## 6.1.2 设计原则 {#principles}
+
+a) **角色固定，不可自定义。** 五个角色对应车间中实际存在的五类职责。
+   可自定义角色的系统在实践中会退化为每人一个角色，失去审计意义；
+
+b) **范围可变。** 同一角色可仅作用于某个机组或某个程序库；
+
+c) **人员与令牌适用同一套规则。** 不存在越权令牌。
+
+## 6.1.3 权限矩阵 {#matrix}
+
+角色与权限的对应关系按表 6-2 的规定。
+
+<p class="tbl-caption">表 6-2　角色与权限矩阵</p>
 
 | 权限 | 只读 | 操作工 | 编程员 | 审批员 | 管理员 |
 | --- | :---: | :---: | :---: | :---: | :---: |
-| `programs.read` 看程序与元数据 | <span class="sup-y">✓</span> | <span class="sup-n">✗</span> | <span class="sup-y">✓</span> | <span class="sup-y">✓</span> | <span class="sup-y">✓</span> |
-| `programs.read.released` 只看已发布版本 | <span class="sup-y">✓</span>* | <span class="sup-y">✓</span> | <span class="sup-y">✓</span>* | <span class="sup-y">✓</span>* | <span class="sup-y">✓</span> |
-| `programs.content.view` 看/下载正文 | <span class="sup-n">✗</span> | <span class="sup-n">✗</span> | <span class="sup-y">✓</span> | <span class="sup-y">✓</span> | <span class="sup-y">✓</span> |
+| `programs.read` 查阅程序与元数据 | <span class="sup-y">✓</span> | <span class="sup-n">✗</span> | <span class="sup-y">✓</span> | <span class="sup-y">✓</span> | <span class="sup-y">✓</span> |
+| `programs.read.released` 仅查阅已发布版本 | <span class="sup-y">✓</span>ᵃ | <span class="sup-y">✓</span> | <span class="sup-y">✓</span>ᵃ | <span class="sup-y">✓</span>ᵃ | <span class="sup-y">✓</span> |
+| `programs.content.view` 查阅、下载正文 | <span class="sup-n">✗</span> | <span class="sup-n">✗</span> | <span class="sup-y">✓</span> | <span class="sup-y">✓</span> | <span class="sup-y">✓</span> |
 | `programs.write` 建程序、传版本、建分配 | <span class="sup-n">✗</span> | <span class="sup-n">✗</span> | <span class="sup-y">✓</span> | <span class="sup-n">✗</span> | <span class="sup-y">✓</span> |
 | `versions.submit` 提交审批 | <span class="sup-n">✗</span> | <span class="sup-n">✗</span> | <span class="sup-y">✓</span> | <span class="sup-n">✗</span> | <span class="sup-y">✓</span> |
-| `approvals.decide` 批准/驳回 | <span class="sup-n">✗</span> | <span class="sup-n">✗</span> | <span class="sup-n">✗</span> | <span class="sup-y">✓</span> | <span class="sup-y">✓</span> |
+| `approvals.decide` 批准、驳回 | <span class="sup-n">✗</span> | <span class="sup-n">✗</span> | <span class="sup-n">✗</span> | <span class="sup-y">✓</span> | <span class="sup-y">✓</span> |
 | `deployments.send.released` 下发已发布版本 | <span class="sup-n">✗</span> | <span class="sup-y">✓</span> | <span class="sup-y">✓</span> | <span class="sup-n">✗</span> | <span class="sup-y">✓</span> |
-| `deployments.send.proveout` 下发试制 | <span class="sup-n">✗</span> | <span class="sup-n">✗</span> | <span class="sup-y">✓</span> | <span class="sup-n">✗</span> | <span class="sup-y">✓</span> |
+| `deployments.send.proveout` 下发试制版本 | <span class="sup-n">✗</span> | <span class="sup-n">✗</span> | <span class="sup-y">✓</span> | <span class="sup-n">✗</span> | <span class="sup-y">✓</span> |
 | `drift.disposition` 处置机边修改 | <span class="sup-n">✗</span> | <span class="sup-n">✗</span> | <span class="sup-y">✓</span> | <span class="sup-n">✗</span> | <span class="sup-y">✓</span> |
-| `machines.read` 看机台与文件状态 | <span class="sup-y">✓</span> | <span class="sup-y">✓</span> | <span class="sup-y">✓</span> | <span class="sup-y">✓</span> | <span class="sup-y">✓</span> |
+| `machines.read` 查阅机台与文件状态 | <span class="sup-y">✓</span> | <span class="sup-y">✓</span> | <span class="sup-y">✓</span> | <span class="sup-y">✓</span> | <span class="sup-y">✓</span> |
 | `machines.files.restore` 还原快照 | <span class="sup-n">✗</span> | <span class="sup-n">✗</span> | <span class="sup-y">✓</span> | <span class="sup-n">✗</span> | <span class="sup-y">✓</span> |
 | `machines.files.adopt` 采纳未受管文件 | <span class="sup-n">✗</span> | <span class="sup-n">✗</span> | <span class="sup-y">✓</span> | <span class="sup-n">✗</span> | <span class="sup-y">✓</span> |
-| `admin` 用户/令牌/Webhook/审计 | <span class="sup-n">✗</span> | <span class="sup-n">✗</span> | <span class="sup-n">✗</span> | <span class="sup-n">✗</span> | <span class="sup-y">✓</span> |
+| `admin` 用户、令牌、Webhook、审计 | <span class="sup-n">✗</span> | <span class="sup-n">✗</span> | <span class="sup-n">✗</span> | <span class="sup-n">✗</span> | <span class="sup-y">✓</span> |
 
-\* 拥有完整读权限 `programs.read` 的角色隐含具备"只读已发布"的能力。
+ᵃ 具备完整读权限 `programs.read` 的角色隐含具备仅读已发布版本的能力。
 
-## 五个角色的画像 {#personas}
+## 6.1.4 角色职责 {#personas}
 
-| 角色 | 典型岗位 | 一句话 |
+五个角色的对应岗位与职责范围按表 6-3 的规定。
+
+<p class="tbl-caption">表 6-3　角色职责</p>
+
+| 角色 | 对应岗位 | 职责范围 |
 | --- | --- | --- |
-| **只读** | 生产计划、班组长 | 能看程序和机台，看不到正文，改不了任何东西 |
-| **操作工** | 车间工位 | 只看已发布版本，能把正确版本发到自己机组的机床上，看不到正文 |
-| **编程员** | 工艺工程师 | 写程序、提交审批、下发（含试制）、处置机边修改、还原与采纳 |
-| **审批员** | 工艺主管、质量工程师 | 看正文、批准/驳回。**不能写、不能发** |
-| **管理员** | 系统管理员 | 上面全部 + 用户/令牌/Webhook/审计 |
+| 只读 | 生产计划、班组长 | 查阅程序与机台，不可查阅正文，不可执行任何变更 |
+| 操作工 | 车间工位 | 查阅已发布版本，向本机组机床下发正式版本，不可查阅正文 |
+| 编程员 | 工艺工程师 | 编写程序、提交审批、下发（含试制）、处置机边修改、还原快照与采纳文件 |
+| 审批员 | 工艺主管、质量工程师 | 查阅正文、批准或驳回。不可编写，不可下发 |
+| 管理员 | 系统管理员 | 上述全部，另含用户、令牌、Webhook 与审计管理 |
 
-注意**编程员不能批准**、**审批员不能下发**——这是职责分离的骨架。
-管理员两者都有，所以生产环境里管理员账号应当很少并且不日常使用。
+:::caution[注意]
+编程员不具备批准权限，审批员不具备下发权限，二者构成职责分离的基本结构。
+管理员同时具备两类权限，因此生产环境中的管理员账号数量应尽量少，且不应用于日常操作。
+:::
 
-## 授权范围 {#scopes}
+## 6.1.5 授权范围 {#scopes}
 
-每条授权是 `角色 × 范围`：
+每条授权由「角色 × 范围」构成，范围类型按表 6-4 的规定。
+
+<p class="tbl-caption">表 6-4　授权范围类型</p>
 
 | 范围 | 作用对象 |
 | --- | --- |
-| **全局** | 一切 |
-| **机组** | 该机组内的机床，及与之相关的下发、漂移处置、快照操作 |
-| **程序库** | 该库内的程序、版本、审批 |
+| 全局 | 全部对象 |
+| 机组 | 该机组内的机台，及与之相关的下发、机边修改处置、快照操作 |
+| 程序库 | 该程序库内的程序、版本与审批 |
 
-一个人可以有多条授权，权限取**并集**。
+一名用户可持有多条授权，其有效权限为各条授权的并集。
 
 ![用户与授权](/img/console/admin-users.png)
 
-<p class="shot-caption">赵莉有两条授权：试制程序库的编程员 + 钻攻中心组的编程员</p>
+<p class="shot-caption">图 6-1　用户与授权页面</p>
 
-### 判定示例 {#examples}
+### 6.1.5.1 判定示例 {#examples}
 
-赵莉（`编程员·试制程序库` + `编程员·钻攻中心组`）：
+以赵莉为例，其授权为「编程员 · 试制程序库」与「编程员 · 钻攻中心组」两条，
+各项操作的判定结果按表 6-5 的规定。
 
-| 操作 | 结果 |
-| --- | --- |
-| 在试制程序库上传新版本 | <span class="sup-y">✓</span> |
-| 在量产程序库上传新版本 | <span class="sup-n">✗</span> 403 |
-| 把试制库的程序下发到钻攻01 | <span class="sup-y">✓</span> |
-| 把试制库的程序下发到立加01（加工中心组） | <span class="sup-n">✗</span> 403 |
-| 处置钻攻01 上的机边修改 | <span class="sup-y">✓</span> |
-| 批准自己写的版本 | <span class="sup-n">✗</span> 没有 `approvals.decide` |
+<p class="tbl-caption">表 6-5　授权判定示例</p>
 
-## 与审批策略的关系 {#vs-policy}
+| 操作 | 判定结果 | 原因 |
+| --- | :---: | --- |
+| 在试制程序库上传新版本 | <span class="sup-y">✓</span> | 程序库范围覆盖 |
+| 在量产程序库上传新版本 | <span class="sup-n">✗</span> | 范围不覆盖，返回 403 |
+| 将试制库的程序下发至钻攻 01 | <span class="sup-y">✓</span> | 机组范围覆盖 |
+| 将试制库的程序下发至立加 01（加工中心组） | <span class="sup-n">✗</span> | 机组范围不覆盖，返回 403 |
+| 处置钻攻 01 上的机边修改 | <span class="sup-y">✓</span> | 机组范围覆盖 |
+| 批准本人创建的版本 | <span class="sup-n">✗</span> | 不具备 `approvals.decide` |
 
-RBAC 决定"**能不能**做"，[程序库审批策略](/guide/approvals/#policy)决定"**要几个人**做"。
-两者是独立的：
+## 6.1.6 与审批策略的关系 {#vs-policy}
 
-- 有 `approvals.decide` 但库要求 2 人 → 你的批准只算一票
-- 库开了"禁止自审自批" → 你即使有权限，也不能批自己写的
+访问控制决定操作是否被允许，程序库审批策略决定放行所需的人数。两者相互独立：
 
-## 服务令牌 {#tokens}
+a) 具备 `approvals.decide` 但程序库要求 2 人审批时，单次批准仅计一票；
 
-令牌用**完全相同**的角色与范围模型。额外两个开关见
-[管理与审计 · 服务令牌](/guide/admin/#tokens)。
+b) 程序库启用「禁止自审自批」时，即使具备权限，作者本人的批准也不计入。
 
-## 403 与 409 {#errors}
+审批策略的配置见 [5.2](/guide/approvals/#policy)。
 
-| 状态码 | 含义 |
-| --- | --- |
-| **403** | 你的角色或范围覆盖不到这个目标 |
-| **409** | 权限没问题，但对象当前的生命周期状态不允许这个操作（例如下发一个草稿版本） |
+## 6.1.7 服务令牌 {#tokens}
 
-看到 403 时查授权范围；看到 409 时查对象状态。
+服务令牌适用与人员账号完全相同的角色与范围模型。令牌特有的两项属性
+（可代理身份、高危需操作人）见 [5.9](/guide/admin/#tokens)。
+
+## 6.1.8 权限相关错误码 {#errors}
+
+<p class="tbl-caption">表 6-6　权限相关错误码</p>
+
+| 状态码 | 含义 | 排查方向 |
+| --- | --- | --- |
+| 403 | 当前角色或范围不覆盖该目标对象 | 检查用户的授权范围 |
+| 409 | 权限满足，但对象当前的生命周期状态不允许该操作，例如下发草稿版本 | 检查对象状态 |
