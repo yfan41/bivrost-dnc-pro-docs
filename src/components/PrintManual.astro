@@ -1,0 +1,199 @@
+---
+/**
+ * The whole manual as one document: every page in sidebar order, merged, with
+ * heading ids de-collided and internal cross-references rewritten to in-document
+ * anchors. Rendered by src/pages/print.astro and captured by
+ * scripts/generate-pdf.mjs.
+ */
+import { getCollection, render } from 'astro:content';
+import { getSidebar, flattenSidebar, canonicalId, entryKeyFor } from '../sidebar.mjs';
+import logo from '../assets/logo.png';
+import '../styles/print-manual.css';
+
+interface Props {
+  version: string;
+}
+
+const { version } = Astro.props;
+
+const chapters = flattenSidebar(getSidebar(version));
+const entries = await getCollection('docs');
+const byKey = new Map(entries.map((entry) => [canonicalId(entry.id), entry]));
+
+const sections = [];
+for (const { slug, depth } of chapters) {
+  const entry = byKey.get(entryKeyFor(slug));
+  // Fail the BUILD, not the PDF run. A chapter silently vanishing from the manual
+  // is the worst failure mode here, and a typo'd sidebar slug is how it happens.
+  if (!entry) throw new Error(`[print] no docs entry for sidebar slug "${slug}"`);
+
+  const idKey = slug.replace(/\//g, '-');
+  sections.push({
+    slug,
+    depth,
+    // The page's own frontmatter title, which is the chapter's real name — see the
+    // note on flattenSidebar about why the sidebar label is not used.
+    heading: entry.data.title,
+    sectionId: `sec-${idKey}`,
+    idPrefix: `${idKey}--`,
+    Content: (await render(entry)).Content,
+  });
+}
+
+// BASE_URL is '/' locally, '/dnc-pro/' or '/dnc-pro/v1.0.0/' in CI.
+const base = import.meta.env.BASE_URL.replace(/\/+$/, '');
+
+const linkMap = Object.fromEntries(
+  sections.map(({ slug, sectionId, idPrefix }) => [slug, { sectionId, idPrefix }])
+);
+
+const printData = {
+  base,
+  // Where links that are not part of this PDF should point instead.
+  site: 'https://docs.bivrost.cn/dnc-pro',
+  linkMap,
+  expected: sections.length,
+};
+---
+
+<div class="print-doc" data-pagefind-ignore>
+  <section class="print-cover">
+    <div class="print-cover-mark">
+      <img src={logo.src} width={logo.width} height={logo.height} alt="Bivrost" />
+    </div>
+
+    <div class="print-cover-block">
+      <h1 class="print-cover-title">DNC Pro 数控程序管理系统</h1>
+      <p class="print-cover-en">CNC Program Management System</p>
+      <hr class="print-cover-rule" />
+      <p class="print-cover-doctype">使用说明书</p>
+    </div>
+
+    <div class="print-cover-imprint">
+      <p class="print-cover-meta">文档版本 V{version}</p>
+      <hr class="print-cover-rule" />
+      <p class="print-cover-org">深圳市彼络科技有限公司</p>
+      <p class="print-cover-org-en">Bivrost Technologies Company Limited</p>
+    </div>
+  </section>
+
+  <nav class="print-toc" aria-label="目录">
+    <h1>目录</h1>
+    <ol>
+      {
+        sections.map(({ sectionId, heading, depth }) => (
+          <li class={`print-toc-${depth}`}>
+            <a href={`#${sectionId}`}>{heading}</a>
+          </li>
+        ))
+      }
+    </ol>
+  </nav>
+
+  {
+    sections.map(({ sectionId, slug, idPrefix, heading, Content }) => (
+      <section class="print-section" id={sectionId} data-slug={slug} data-prefix={idPrefix}>
+        <h1 class="print-section-title">{heading}</h1>
+        <Content />
+      </section>
+    ))
+  }
+</div>
+
+<script is:inline define:vars={{ printData }}>
+  /*
+   * Turn 25 separately-authored pages into one document:
+   *   1. prefix every heading id per section so anchors stop colliding
+   *   2. rewrite internal links to in-document #fragments so cross-references
+   *      still work inside the PDF
+   * Done in the DOM rather than at build time because the DOM is exactly what
+   * Chromium prints, and because it is inspectable — open /print/ and click a link.
+   */
+  (() => {
+    const { base, site, linkMap, expected } = printData;
+    const sections = Array.from(document.querySelectorAll('section[data-slug]'));
+    const stats = { sections: sections.length, expected, ids: 0, rewritten: 0, unresolved: [] };
+
+    // 1. De-collide ids, remembering the old → new mapping per section so that
+    //    same-page fragment links can be remapped too.
+    const idMaps = new Map();
+    for (const section of sections) {
+      const prefix = section.dataset.prefix;
+      const map = new Map();
+      for (const el of section.querySelectorAll('[id]')) {
+        const before = el.id;
+        el.id = prefix + before;
+        map.set(before, el.id);
+        stats.ids++;
+      }
+      idMaps.set(section, map);
+    }
+
+    /** Path → link-map key. '' (the site root) normalises to 'index'. */
+    const pathToKey = (pathname) => {
+      let p = pathname.replace(/^\/+|\/+$/g, '');
+      if (base) {
+        const b = base.replace(/^\/+/, '');
+        if (p === b) p = '';
+        else if (p.startsWith(b + '/')) p = p.slice(b.length + 1);
+      }
+      return p === '' ? 'index' : p;
+    };
+
+    // 2. Rewrite links.
+    for (const section of sections) {
+      const slug = section.dataset.slug;
+      const idMap = idMaps.get(section);
+      // This section's own URL, so relative hrefs resolve.
+      const selfPath = base + '/' + (slug === 'index' ? '' : slug + '/');
+      const selfURL = new URL(selfPath, location.origin);
+
+      for (const a of section.querySelectorAll('a[href]')) {
+        // The front page's quick-link card grid is navigation, hidden by
+        // print-manual.css. Leaving its hrefs alone keeps `unresolved` a signal
+        // about the prose rather than about site chrome.
+        if (a.closest('.home-grid')) continue;
+
+        const raw = a.getAttribute('href');
+        if (!raw) continue;
+        // External and non-http schemes are left exactly as authored.
+        if (/^(https?:)?\/\//i.test(raw) || /^[a-z][a-z0-9+.-]*:/i.test(raw)) continue;
+
+        // Same-page fragment: heading self-links and in-page references.
+        if (raw.startsWith('#')) {
+          const target = idMap.get(decodeURIComponent(raw.slice(1)));
+          if (target) {
+            a.setAttribute('href', '#' + encodeURIComponent(target));
+            stats.rewritten++;
+          }
+          continue;
+        }
+
+        const url = raw.startsWith('/') ? new URL(raw, location.origin) : new URL(raw, selfURL);
+        const entry = linkMap[decodeURIComponent(pathToKey(url.pathname))];
+        if (entry) {
+          const hash = url.hash ? decodeURIComponent(url.hash.slice(1)) : '';
+          a.setAttribute(
+            'href',
+            '#' + encodeURIComponent(hash ? entry.idPrefix + hash : entry.sectionId)
+          );
+          stats.rewritten++;
+        } else {
+          // Not part of this PDF. Keep it working as a web link instead of leaving
+          // a dead relative href.
+          const rest =
+            base && url.pathname.startsWith(base) ? url.pathname.slice(base.length) : url.pathname;
+          a.setAttribute('href', site + rest + url.hash);
+          a.setAttribute('target', '_blank');
+          a.setAttribute('rel', 'noopener');
+          stats.unresolved.push({ from: slug, href: raw });
+        }
+      }
+    }
+
+    // Never inherit dark mode from localStorage — print.css assumes light.
+    document.documentElement.dataset.theme = 'light';
+
+    window.__printManual = Object.assign(stats, { ready: true });
+  })();
+</script>

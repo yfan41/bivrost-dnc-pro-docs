@@ -170,4 +170,4 @@ d) 具备固定 IP 或 DNS 名称，供车间浏览器与触摸屏访问。
 不支持将 Windows Server、WSL2 与 Docker Desktop 作为生产部署目标。
 :::
 
-安装方法见 [4.1](/start/install/)。
+接入与初始配置见[第 4 章](/start/)。

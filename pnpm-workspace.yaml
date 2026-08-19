@@ -1,3 +1,6 @@
 allowBuilds:
   esbuild: true
   sharp: true
+  # Playwright browsers are NOT downloaded on install — the PDF export is opt-in.
+  # Install the matching Chromium once with: pnpm exec playwright install chromium
+  playwright: false

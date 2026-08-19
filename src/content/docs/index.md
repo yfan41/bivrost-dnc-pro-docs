@@ -18,13 +18,13 @@ hero:
     <span class="home-card-title">安全与注意事项</span>
     <span class="home-card-desc">使用前必读的强制性要求</span>
   </a>
-  <a class="home-card" href="start/install/">
-    <span class="home-card-title">4.1 安装部署</span>
-    <span class="home-card-desc">docker compose 部署与就绪确认</span>
-  </a>
   <a class="home-card" href="start/gateways/">
-    <span class="home-card-title">4.2 接入网关与机台</span>
+    <span class="home-card-title">4.1 接入网关与机台</span>
     <span class="home-card-desc">注册网关、同步机台台账、划分机组</span>
+  </a>
+  <a class="home-card" href="start/first-transfer/">
+    <span class="home-card-title">4.2 首次程序下发</span>
+    <span class="home-card-desc">建立程序库、审批放行、执行下发</span>
   </a>
   <a class="home-card" href="guide/vault/">
     <span class="home-card-title">5.1 程序库与版本</span>

@@ -1,0 +1,29 @@
+---
+/**
+ * Whole-manual print route. Not part of the docs collection, so Starlight leaves it
+ * out of the sidebar, and `pagefind: false` keeps it out of search.
+ * scripts/generate-pdf.mjs captures this page into the downloadable PDF; it is also
+ * usable directly (Ctrl-P) as a print view — the fast loop for print-manual.css.
+ */
+import StarlightPage from '@astrojs/starlight/components/StarlightPage.astro';
+import PrintManual from '../components/PrintManual.astro';
+import versionRaw from '../../VERSION?raw';
+
+const version = versionRaw.trim();
+---
+
+<StarlightPage
+  hasSidebar={false}
+  headings={[]}
+  frontmatter={{
+    title: `DNC Pro 数控程序管理系统 使用说明书 V${version}`,
+    template: 'doc',
+    tableOfContents: false,
+    pagefind: false,
+    prev: false,
+    next: false,
+    head: [{ tag: 'meta', attrs: { name: 'robots', content: 'noindex, nofollow' } }],
+  }}
+>
+  <PrintManual version={version} />
+</StarlightPage>

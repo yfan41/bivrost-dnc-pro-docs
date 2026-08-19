@@ -9,7 +9,8 @@
     "build": "astro build",
     "serve": "astro preview",
     "astro": "astro",
-    "typecheck": "astro check"
+    "typecheck": "astro check",
+    "pdf": "node scripts/generate-pdf.mjs"
   },
   "dependencies": {
     "@astrojs/markdown-satteri": "^0.3.4",
@@ -23,6 +24,8 @@
   },
   "devDependencies": {
     "@astrojs/check": "^0.9.9",
+    "pdf-lib": "^1.17.1",
+    "playwright": "^1.56.0",
     "typescript": "^5.9.3"
   }
 }
