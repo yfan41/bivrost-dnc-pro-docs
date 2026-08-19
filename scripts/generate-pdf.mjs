@@ -41,29 +41,61 @@ try {
 // Not file://: images and cross-links are root-absolute /img/console/... paths
 // (rebased to /dnc-pro/img/... under a base), which would resolve to file:///img/
 // and 404.
+// Refuse to capture from a server this script did not start. `astro preview` falls
+// forward to the next free port when the requested one is taken, so a stray server
+// here would answer the readiness poll below and the PDF would be rendered from
+// whatever THAT is serving.
+const portTaken = await fetch(origin, { signal: AbortSignal.timeout(1000) }).then(
+  () => true,
+  () => false
+);
+if (portTaken) {
+  throw new Error(`something is already listening on ${origin} — stop it, or set PDF_PORT`);
+}
+
 const previewArgs = ['exec', 'astro', 'preview'];
 const cwd = new URL('.', root);
+// `detached` puts the wrapper and the astro process it starts in their own group, so
+// one signal reaches both (see stopPreview).
 const preview = spawn('pnpm', [...previewArgs, '--port', String(port), '--host', '127.0.0.1'], {
   cwd,
   stdio: ['ignore', 'inherit', 'inherit'],
   env: process.env,
+  detached: true,
 });
 /*
- * Both halves are needed, because Astro changed how `preview` runs mid-7.x:
- *  - up to 7.1 it stays a child of this process, so killing it is what works and
- *    `astro preview stop` does not exist;
- *  - from 7.2 it daemonises (detaches and reparents to init), so the kill is a no-op
- *    and only `stop` gets rid of it.
- * A leaked server is not merely untidy: the next run's readiness poll would be
- * answered by it, and the PDF would be captured from a stale dist/. `stop` is scoped
- * to this project, so it cannot stop a preview server for a sibling docs site.
+ * Astro changed how `preview` runs mid-7.x, and the two versions need opposite
+ * cleanups:
+ *  - up to 7.1 the server stays a child of this process. Signalling the process
+ *    group is what stops it, and `astro preview stop` does not exist there — it
+ *    parses as plain `astro preview` and starts ANOTHER server, which then blocks
+ *    this script forever.
+ *  - from 7.2 the server daemonises (detaches, reparents to init, leaves its process
+ *    group), so the signal cannot reach it and only `stop` gets rid of it. That case
+ *    is recognisable: the wrapper we spawned has already exited.
+ * A leaked server is not merely untidy — the next run's readiness poll would be
+ * answered by it and the PDF captured from a stale dist/.
  */
 let stopped = false;
 const stopPreview = () => {
   if (stopped) return;
   stopped = true;
-  if (!preview.killed) preview.kill('SIGTERM');
-  spawnSync('pnpm', [...previewArgs, 'stop'], { cwd, stdio: 'ignore', env: process.env });
+  if (preview.exitCode === null && preview.signalCode === null) {
+    try {
+      process.kill(-preview.pid, 'SIGTERM');
+    } catch {
+      /* already gone */
+    }
+    return;
+  }
+  // `stop` is scoped to this project, so it cannot stop a preview server for a
+  // sibling docs site. The timeout is a backstop against the 7.1 behaviour above.
+  spawnSync('pnpm', [...previewArgs, 'stop'], {
+    cwd,
+    stdio: 'ignore',
+    env: process.env,
+    timeout: 30_000,
+  });
 };
 process.on('exit', stopPreview);
 for (const sig of ['SIGINT', 'SIGTERM']) {
