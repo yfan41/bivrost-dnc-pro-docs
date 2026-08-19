@@ -75,7 +75,7 @@ X-On-Behalf-Of: lichen
 | 404 | 对象不存在，或在当前范围内不可见 | 检查对象 ID 与授权范围 |
 | 409 | 与对象当前的生命周期状态冲突，例如下发草稿版本 | 检查对象状态 |
 | 422 | 请求可被理解，但内容不可接受 | 检查业务约束 |
-| 503 | 依赖不可用 | 查询 `/readyz` 定位失败项 |
+| 503 | 服务暂不可用 | 稍后重试，持续出现时联系供应方 |
 
 403 与 409 为集成过程中最常见的两类错误：403 应检查授权，409 应检查对象状态。
 
@@ -96,7 +96,6 @@ X-On-Behalf-Of: lichen
 | Admin | `POST/GET /admin/users`、`POST/GET /admin/service-tokens`、`POST/GET /admin/webhooks`、`GET /admin/webhooks/deliveries` |
 | Audit | `GET /audit`、`GET /audit/export`、`GET /audit/verify` |
 | Dashboard | `GET /dashboard/summary`、`GET /dashboard/recent-deployments` |
-| Operations | `GET /healthz`、`GET /readyz` |
 
 ## 6.3.5 集成示例 {#examples}
 
