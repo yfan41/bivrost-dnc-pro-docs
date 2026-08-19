@@ -62,7 +62,7 @@ export function getSidebar(version) {
         { label: '6.1 角色与权限', slug: 'reference/rbac' },
         { label: '6.2 机床系统差异', slug: 'reference/vendors' },
         { label: '6.3 REST API', slug: 'reference/api' },
-        { label: '6.4 运行维护', slug: 'reference/operations' },
+        { label: '6.4 日常核查', slug: 'reference/operations' },
         { label: '6.5 术语表', slug: 'reference/glossary' },
       ],
     },
