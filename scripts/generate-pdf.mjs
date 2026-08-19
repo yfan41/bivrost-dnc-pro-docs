@@ -43,19 +43,26 @@ try {
 // and 404.
 const previewArgs = ['exec', 'astro', 'preview'];
 const cwd = new URL('.', root);
-spawn('pnpm', [...previewArgs, '--port', String(port), '--host', '127.0.0.1'], {
+const preview = spawn('pnpm', [...previewArgs, '--port', String(port), '--host', '127.0.0.1'], {
   cwd,
   stdio: ['ignore', 'inherit', 'inherit'],
   env: process.env,
 });
-// `astro preview` daemonises itself (the spawned process detaches and reparents to
-// init), so killing the child we spawned leaves the server listening. Astro's own
-// `stop` subcommand is the supported way out; it is scoped to this project, so it
-// cannot stop a preview server running for a sibling docs site.
+/*
+ * Both halves are needed, because Astro changed how `preview` runs mid-7.x:
+ *  - up to 7.1 it stays a child of this process, so killing it is what works and
+ *    `astro preview stop` does not exist;
+ *  - from 7.2 it daemonises (detaches and reparents to init), so the kill is a no-op
+ *    and only `stop` gets rid of it.
+ * A leaked server is not merely untidy: the next run's readiness poll would be
+ * answered by it, and the PDF would be captured from a stale dist/. `stop` is scoped
+ * to this project, so it cannot stop a preview server for a sibling docs site.
+ */
 let stopped = false;
 const stopPreview = () => {
   if (stopped) return;
   stopped = true;
+  if (!preview.killed) preview.kill('SIGTERM');
   spawnSync('pnpm', [...previewArgs, 'stop'], { cwd, stdio: 'ignore', env: process.env });
 };
 process.on('exit', stopPreview);
@@ -165,7 +172,15 @@ try {
    * 250-entry bookmark tree: every other page object is untouched, so the
    * outline's destinations still resolve.
    */
-  const cover = await page.pdf({ ...layout, displayHeaderFooter: false, pageRanges: '1' });
+  // Strip everything after the cover before the second capture. `pageRanges: '1'`
+  // would re-paginate the whole document — minutes of work on a screenshot-heavy
+  // manual — for one sheet that is already laid out.
+  await page.evaluate(() => {
+    for (const el of document.querySelectorAll('.print-toc, .print-section')) el.remove();
+    // Nothing follows the cover now, so its page break would only risk a blank sheet.
+    document.querySelector('.print-cover').style.breakAfter = 'auto';
+  });
+  const cover = await page.pdf({ ...layout, displayHeaderFooter: false });
   const doc = await PDFDocument.load(body);
   const [coverPage] = await doc.copyPages(await PDFDocument.load(cover), [0]);
   doc.removePage(0);
