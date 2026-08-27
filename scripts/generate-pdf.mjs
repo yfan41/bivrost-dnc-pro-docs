@@ -188,7 +188,7 @@ try {
     ...layout,
     displayHeaderFooter: true,
     headerTemplate: `<div style="${chrome} display:flex; justify-content:space-between; border-bottom:0.5px solid #bbb; padding-bottom:2mm;"><span>DNC Pro 数控程序管理系统 使用说明书</span><span>V${version}</span></div>`,
-    footerTemplate: `<div style="${chrome} text-align:center;">第 <span class="pageNumber"></span> 页 共 <span class="totalPages"></span> 页</div>`,
+    footerTemplate: `<div style="${chrome}"></div>`,
     // A real bookmark tree for a 25-chapter manual; `outline` requires `tagged`.
     tagged: true,
     outline: true,
