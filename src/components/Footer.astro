@@ -2,6 +2,7 @@
 import Default from '@astrojs/starlight/components/Footer.astro';
 // Vite ?raw import: inlined at bundle time, so it also works in the prerender build
 // where import.meta.url points into dist/ and fs paths would break.
+import qr from '../assets/qr-wechat.png';
 import versionRaw from '../../VERSION?raw';
 
 const version = versionRaw.trim();
@@ -9,10 +10,27 @@ const version = versionRaw.trim();
 
 <Default><slot /></Default>
 <div class="copyright">
+  <img class="qr" src={qr.src} width={qr.width} height={qr.height} alt="彼络微信客服二维码" />
+  <div class="qr-cap">扫码添加微信客服</div>
   {`© BIVROST TECHONOLOGIES Company Limited / 深圳市彼络科技有限公司 · DNC Pro 手册 v${version} · 联系电话：18824672282`}
 </div>
 
 <style>
+  .copyright .qr {
+    display: block;
+    width: 88px;
+    height: auto;
+    margin: 0 auto 0.5rem;
+    /* The source QR has no quiet zone, so supply one: white ground plus ~4
+       modules of padding. Without it the code will not scan on a dark theme. */
+    background: #fff;
+    padding: 10px;
+    box-sizing: content-box;
+    border-radius: 4px;
+  }
+  .copyright .qr-cap {
+    margin-bottom: 0.6rem;
+  }
   .copyright {
     margin-top: 1.5rem;
     padding-top: 1rem;
