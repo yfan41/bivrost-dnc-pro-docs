@@ -41,7 +41,7 @@
   text-align: center;
   padding-block: 4rem 3rem;
 }
-.print-doc .print-cover img {
+.print-doc .print-cover-mark img {
   width: 200px;
   height: auto;
   margin-inline: auto;
@@ -86,6 +86,24 @@
   letter-spacing: 0.14em;
   color: var(--sl-color-gray-3);
   margin: 0.35rem 0 0;
+}
+.print-doc .print-cover-qr {
+  margin: 1.5rem 0 0;
+}
+.print-doc .print-cover-qr img {
+  display: block;
+  width: 26mm;
+  height: auto;
+  margin-inline: auto;
+  /* The source is a 144x144 raster, so 26mm lands near 141 dpi. Nearest-neighbour
+     keeps the module edges square; smoothing them is what breaks a scan. */
+  image-rendering: pixelated;
+}
+.print-doc .print-cover-qr figcaption {
+  margin: 0.4rem 0 0;
+  font-size: 0.7rem;
+  letter-spacing: 0.1em;
+  color: var(--sl-color-gray-3);
 }
 
 .print-doc .print-toc h1 {
@@ -181,6 +199,9 @@
   }
   .print-doc .print-cover-title {
     font-size: 26pt;
+  }
+  .print-doc .print-cover-qr img {
+    width: 26mm;
   }
   .print-doc .print-cover-doctype {
     font-size: 20pt;
